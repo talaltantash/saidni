@@ -1,0 +1,127 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--white);
+  border-bottom: 1px solid var(--border);
+  height: 70px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 2rem;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--green-primary);
+  flex-shrink: 0;
+}
+
+.logo-icon {
+  font-size: 1.25rem;
+}
+
+.navbar-menu {
+  display: flex;
+  gap: 2rem;
+  flex-grow: 1;
+}
+
+.navbar-link {
+  color: var(--text-primary);
+  font-weight: 500;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.navbar-link:hover {
+  color: var(--green-primary);
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-language {
+  background-color: var(--cream-dark);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-language:hover {
+  background-color: var(--gold-light);
+  color: var(--white);
+}
+
+.navbar-toggle {
+  display: none;
+  flex-direction: column;
+  background: none;
+  border: none;
+  cursor: pointer;
+  gap: 4px;
+  padding: 0;
+}
+
+.navbar-toggle span {
+  width: 24px;
+  height: 2px;
+  background-color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .navbar-toggle {
+    display: flex;
+  }
+
+  .navbar-menu {
+    position: absolute;
+    top: 70px;
+    left: 0;
+    right: 0;
+    background-color: var(--white);
+    flex-direction: column;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .navbar-menu.open {
+    max-height: 500px;
+  }
+
+  .navbar-link {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin: 0;
+  }
+
+  .navbar-content {
+    gap: 0;
+  }
+
+  .navbar-logo {
+    font-size: 1.25rem;
+  }
+}
