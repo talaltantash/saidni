@@ -182,7 +182,7 @@ def register_customer():
             (data['email'], password_hash, data['name'], data['phone'], 'customer')
         )
         if DATABASE_URL:
-            user_id = cursor.fetchone()[0]
+            user_id = cursor.fetchone()['id']
         else:
             db.commit()
             user_id = cursor.lastrowid
@@ -225,8 +225,12 @@ def register_worker():
             'INSERT INTO users (email, password_hash, name, phone, user_type) VALUES (%s, %s, %s, %s, %s) RETURNING id',
             (data['email'], password_hash, data['name'], data['phone'], 'worker')
         )
+        if DATABASE_URL:
+            user_id = cursor.fetchone()['id']
+        else:
+            db.commit()
+            user_id = cursor.lastrowid
         db.commit()
-        user_id = cursor.lastrowid
 
         cursor.execute(
             '''INSERT INTO workers (user_id, category, bio, location, experience_years, whatsapp_number, vtc_license_number)
