@@ -19,85 +19,6 @@ export default function WorkerProfile({ user }) {
   const [bookingError, setBookingError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState('');
 
-  useEffect(() => {
-    fetchWorker();
-  }, [id]);
-
-  const fetchWorker = async () => {
-    setLoading(true);
-    try {
-      const res = await apiFetch(`/api/workers/${id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setWorker(data);
-      } else {
-        setError(t('messages.notFound'));
-      }
-    } catch (err) {
-      console.error('Error fetching worker:', err);
-      setError(t('messages.error'));
-    }
-    setLoading(false);
-  };
-
-  const handleSubmitBooking = async (e) => {
-    e.preventDefault();
-    setBookingError('');
-    setBookingSuccess('');
-    if (!bookingData.service_description.trim()) {
-      setBookingError('يرجى وصف الخدمة المطلوبة');
-      return;
-    }
-    setBookingSubmitting(true);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await apiFetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-          worker_id: parseInt(id),
-          service_description: bookingData.service_description,
-          payment_method: bookingData.payment_method
-        })
-      });
-      if (res.ok) {
-        setBookingSuccess('تم إرسال طلب الحجز بنجاح!');
-        setBookingData({ service_description: '', payment_method: 'cash' });
-      } else {
-        setBookingError('حدث خطأ، حاول مرة أخرى');
-      }
-    } catch (err) {
-      setBookingError('حدث خطأ، حاول مرة أخرى');
-    }
-    setBookingSubmitting(false);
-  };
-
-  const handleSubmitReview = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    i
-cat > WorkerProfile.jsx << 'ENDOFFILE'
-import { apiFetch } from '../api.js';
-import React, { useState, useEffect } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
-import { useLang } from '../i18n';
-import StarRating from '../components/StarRating';
-import './WorkerProfile.css';
-
-export default function WorkerProfile({ user }) {
-  const { id } = useParams();
-  const { t } = useLang();
-  const [worker, setWorker] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [reviewData, setReviewData] = useState({ rating: 0, comment: '' });
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [bookingData, setBookingData] = useState({ service_description: '', payment_method: 'cash' });
-  const [bookingSubmitting, setBookingSubmitting] = useState(false);
-  const [bookingError, setBookingError] = useState('');
-  const [bookingSuccess, setBookingSuccess] = useState('');
 
   useEffect(() => {
     fetchWorker();
@@ -120,58 +41,37 @@ export default function WorkerProfile({ user }) {
     setLoading(false);
   };
 
-  const handleSubmitBooking = async (e) => {
-    e.preventDefault();
-    setBookingError('');
-    setBookingSuccess('');
-    if (!bookingData.service_description.trim()) {
-      setBookingError('يرجى وصف الخدمة المطلوبة');
-      return;
-    }
-    setBookingSubmitting(true);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await apiFetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-          worker_id: parseInt(id),
-          service_description: bookingData.service_description,
-          payment_method: bookingData.payment_method
-        })
-      });
-      if (res.ok) {
-        setBookingSuccess('تم إرسال طلب الحجز بنجاح!');
-        setBookingData({ service_description: '', payment_method: 'cash' });
-      } else {
-        setBookingError('حدث خطأ، حاول مرة أخرى');
-      }
-    } catch (err) {
-      setBookingError('حدث خطأ، حاول مرة أخرى');
-    }
-    setBookingSubmitting(false);
-  };
-
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+
     if (!user || user.user_type !== 'customer') {
       setError(t('worker.loginToReview'));
       return;
     }
+
     if (!reviewData.rating || !reviewData.comment.trim()) {
       setError(t('messages.requiredField'));
       return;
     }
+
     setSubmitting(true);
     try {
       const token = localStorage.getItem('token');
       const res = await apiFetch('/api/reviews', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ worker_id: parseInt(id), rating: reviewData.rating, comment: reviewData.comment })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          worker_id: parseInt(id),
+          rating: reviewData.rating,
+          comment: reviewData.comment
+        })
       });
+
       if (res.ok) {
         setSuccess(t('messages.success'));
         setReviewData({ rating: 0, comment: '' });
@@ -186,6 +86,39 @@ export default function WorkerProfile({ user }) {
       setError(t('messages.error'));
     }
     setSubmitting(false);
+  };
+
+
+  const handleSubmitBooking = async (e) => {
+    e.preventDefault();
+    setBookingError('');
+    setBookingSuccess('');
+    if (!bookingData.service_description.trim()) {
+      setBookingError('يرجى وصف الخدمة المطلوبة');
+      return;
+    }
+    setBookingSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await apiFetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          worker_id: parseInt(id),
+          service_description: bookingData.service_description,
+          payment_method: bookingData.payment_method
+        })
+      });
+      if (res.ok) {
+        setBookingSuccess('تم إرسال طلب الحجز بنجاح!');
+        setBookingData({ service_description: '', payment_method: 'cash' });
+      } else {
+        setBookingError('حدث خطأ، حاول مرة أخرى');
+      }
+    } catch (err) {
+      setBookingError('حدث خطأ، حاول مرة أخرى');
+    }
+    setBookingSubmitting(false);
   };
 
   if (loading) {
@@ -232,6 +165,7 @@ export default function WorkerProfile({ user }) {
               <h3>{t('worker.profile')}</h3>
               <div className="divider"></div>
               <p>{worker.bio}</p>
+
               <div className="stats-section">
                 <div className="stat-item">
                   <h4>{worker.experience_years}</h4>
@@ -252,19 +186,20 @@ export default function WorkerProfile({ user }) {
               </div>
             </div>
 
+
             {user && user.user_type === 'customer' && (
               <div className="card mt-3">
-                <h3>📅 احجز هذا الحرفي</h3>
+                <h3>احجز هذا الحرفي</h3>
                 <div className="divider"></div>
                 {bookingError && <div className="error-text">{bookingError}</div>}
-                {bookingSuccess && <div className="success-text">✓ {bookingSuccess}</div>}
+                {bookingSuccess && <div className="success-text">{bookingSuccess}</div>}
                 <form onSubmit={handleSubmitBooking}>
                   <div className="form-group">
                     <label>وصف الخدمة المطلوبة</label>
                     <textarea
                       value={bookingData.service_description}
                       onChange={(e) => setBookingData(prev => ({ ...prev, service_description: e.target.value }))}
-                      placeholder="اكتب وصفاً للخدمة التي تحتاجها..."
+                      placeholder="اكتب وصفا للخدمة التي تحتاجها..."
                       rows={3}
                     />
                   </div>
@@ -275,13 +210,13 @@ export default function WorkerProfile({ user }) {
                       onChange={(e) => setBookingData(prev => ({ ...prev, payment_method: e.target.value }))}
                       style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '1rem' }}
                     >
-                      <option value="cash">💵 كاش</option>
-                      <option value="cliq">📱 CliQ</option>
-                      <option value="visa_mastercard">💳 فيزا / ماستركارد</option>
+                      <option value="cash">كاش</option>
+                      <option value="cliq">CliQ</option>
+                      <option value="visa_mastercard">فيزا / ماستركارد</option>
                     </select>
                   </div>
                   <button type="submit" className="btn btn-primary btn-full" disabled={bookingSubmitting} style={{ marginTop: '1rem' }}>
-                    {bookingSubmitting ? 'جاري الإرسال...' : 'إرسال طلب الحجز'}
+                    {bookingSubmitting ? 'جاري الارسال...' : 'ارسال طلب الحجز'}
                   </button>
                 </form>
               </div>
@@ -290,6 +225,7 @@ export default function WorkerProfile({ user }) {
             <div className="card mt-3">
               <h3>{t('worker.reviews')}</h3>
               <div className="divider"></div>
+
               {worker.reviews && worker.reviews.length > 0 ? (
                 <div className="reviews-list">
                   {worker.reviews.map(review => (
@@ -318,8 +254,10 @@ export default function WorkerProfile({ user }) {
               <div className="card mt-3">
                 <h3>{t('worker.leaveReview')}</h3>
                 <div className="divider"></div>
+
                 {error && <div className="error-text">{error}</div>}
                 {success && <div className="success-text">✓ {success}</div>}
+
                 <form onSubmit={handleSubmitReview}>
                   <div className="form-group">
                     <label>{t('worker.yourRating')}</label>
@@ -329,6 +267,7 @@ export default function WorkerProfile({ user }) {
                       interactive={true}
                     />
                   </div>
+
                   <div className="form-group mt-2">
                     <label>{t('worker.yourComment')}</label>
                     <textarea
@@ -337,7 +276,12 @@ export default function WorkerProfile({ user }) {
                       placeholder={t('worker.yourComment')}
                     />
                   </div>
-                  <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-full"
+                    disabled={submitting}
+                  >
                     {submitting ? t('messages.loading') : t('worker.submitReview')}
                   </button>
                 </form>
