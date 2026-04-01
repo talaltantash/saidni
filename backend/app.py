@@ -24,7 +24,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db():
     if DATABASE_URL:
-        db = psycopg2.connect(DATABASE_URL)
+        db = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
         db.autocommit = False
         return db
     db = sqlite3.connect(DATABASE)
@@ -178,11 +178,15 @@ def register_customer():
 
         password_hash = generate_password_hash(data['password'])
         cursor.execute(
-            'INSERT INTO users (email, password_hash, name, phone, user_type) VALUES (%s, %s, %s, %s, %s)',
+            'INSERT INTO users (email, password_hash, name, phone, user_type) VALUES (%s, %s, %s, %s, %s) RETURNING id',
             (data['email'], password_hash, data['name'], data['phone'], 'customer')
         )
+        if DATABASE_URL:
+            user_id = cursor.fetchone()[0]
+        else:
+            db.commit()
+            user_id = cursor.lastrowid
         db.commit()
-        user_id = cursor.lastrowid
 
         user = cursor.execute(sql('SELECT * FROM users WHERE id = %s'), (user_id,)).fetchone()
         db.close()
@@ -218,7 +222,7 @@ def register_worker():
 
         password_hash = generate_password_hash(data['password'])
         cursor.execute(
-            'INSERT INTO users (email, password_hash, name, phone, user_type) VALUES (%s, %s, %s, %s, %s)',
+            'INSERT INTO users (email, password_hash, name, phone, user_type) VALUES (%s, %s, %s, %s, %s) RETURNING id',
             (data['email'], password_hash, data['name'], data['phone'], 'worker')
         )
         db.commit()
@@ -226,7 +230,7 @@ def register_worker():
 
         cursor.execute(
             '''INSERT INTO workers (user_id, category, bio, location, experience_years, whatsapp_number, vtc_license_number)
-               VALUES (%s, %s, %s, %s, %s, %s, %s)''',
+               VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id''',
             (user_id, data['category'], data['bio'], data['location'], int(data['experience_years']), data['whatsapp_number'], data['vtc_license_number'])
         )
         db.commit()
