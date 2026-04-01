@@ -31,6 +31,11 @@ def get_db():
     db.row_factory = sqlite3.Row
     return db
 
+def sql(query):
+    if DATABASE_URL:
+        return query.replace('?', '%s')
+    return query
+
 def init_db():
     db = get_db()
     if DATABASE_URL:
@@ -179,7 +184,7 @@ def register_customer():
         db.commit()
         user_id = cursor.lastrowid
 
-        user = cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+        user = cursor.execute(sql('SELECT * FROM users WHERE id = ?'), (user_id,)).fetchone()
         db.close()
 
         access_token = create_access_token(identity=user_id)
@@ -226,7 +231,7 @@ def register_worker():
         )
         db.commit()
 
-        user = cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+        user = cursor.execute(sql('SELECT * FROM users WHERE id = ?'), (user_id,)).fetchone()
         db.close()
 
         access_token = create_access_token(identity=user_id)
@@ -257,7 +262,7 @@ def login():
         db = get_db()
         cursor = db.cursor()
 
-        user = cursor.execute('SELECT * FROM users WHERE email = ?', (data['email'],)).fetchone()
+        user = cursor.execute(sql('SELECT * FROM users WHERE email = ?'), (data['email'],)).fetchone()
 
         if not user or not check_password_hash(user['password_hash'], data['password']):
             return jsonify({'error': 'Invalid email or password'}), 401
@@ -286,7 +291,7 @@ def get_me():
         db = get_db()
         cursor = db.cursor()
 
-        user = cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+        user = cursor.execute(sql('SELECT * FROM users WHERE id = ?'), (user_id,)).fetchone()
 
         if not user:
             return jsonify({'error': 'User not found'}), 404
@@ -300,7 +305,7 @@ def get_me():
         }
 
         if user['user_type'] == 'worker':
-            worker = cursor.execute('SELECT * FROM workers WHERE user_id = ?', (user_id,)).fetchone()
+            worker = cursor.execute(sql('SELECT * FROM workers WHERE user_id = ?'), (user_id,)).fetchone()
             if worker:
                 response['worker'] = {
                     'id': worker['id'],
@@ -443,11 +448,11 @@ def create_review():
         db = get_db()
         cursor = db.cursor()
 
-        user = cursor.execute('SELECT user_type FROM users WHERE id = ?', (user_id,)).fetchone()
+        user = cursor.execute(sql('SELECT user_type FROM users WHERE id = ?'), (user_id,)).fetchone()
         if not user or user['user_type'] != 'customer':
             return jsonify({'error': 'Only customers can leave reviews'}), 403
 
-        worker = cursor.execute('SELECT * FROM workers WHERE id = ?', (data['worker_id'],)).fetchone()
+        worker = cursor.execute(sql('SELECT * FROM workers WHERE id = ?'), (data['worker_id'],)).fetchone()
         if not worker:
             return jsonify({'error': 'Worker not found'}), 404
 
@@ -494,11 +499,11 @@ def create_booking():
         db = get_db()
         cursor = db.cursor()
 
-        user = cursor.execute('SELECT user_type FROM users WHERE id = ?', (user_id,)).fetchone()
+        user = cursor.execute(sql('SELECT user_type FROM users WHERE id = ?'), (user_id,)).fetchone()
         if not user or user['user_type'] != 'customer':
             return jsonify({'error': 'Only customers can create bookings'}), 403
 
-        worker = cursor.execute('SELECT * FROM workers WHERE id = ?', (data['worker_id'],)).fetchone()
+        worker = cursor.execute(sql('SELECT * FROM workers WHERE id = ?'), (data['worker_id'],)).fetchone()
         if not worker:
             return jsonify({'error': 'Worker not found'}), 404
 
@@ -562,7 +567,7 @@ def get_pending_workers():
         db = get_db()
         cursor = db.cursor()
 
-        admin_user = cursor.execute('SELECT user_type FROM users WHERE id = ?', (user_id,)).fetchone()
+        admin_user = cursor.execute(sql('SELECT user_type FROM users WHERE id = ?'), (user_id,)).fetchone()
         if not admin_user or admin_user['user_type'] != 'admin':
             return jsonify({'error': 'Admin access required'}), 403
 
@@ -605,11 +610,11 @@ def verify_worker(worker_id):
         db = get_db()
         cursor = db.cursor()
 
-        admin_user = cursor.execute('SELECT user_type FROM users WHERE id = ?', (user_id,)).fetchone()
+        admin_user = cursor.execute(sql('SELECT user_type FROM users WHERE id = ?'), (user_id,)).fetchone()
         if not admin_user or admin_user['user_type'] != 'admin':
             return jsonify({'error': 'Admin access required'}), 403
 
-        worker = cursor.execute('SELECT * FROM workers WHERE id = ?', (worker_id,)).fetchone()
+        worker = cursor.execute(sql('SELECT * FROM workers WHERE id = ?'), (worker_id,)).fetchone()
         if not worker:
             return jsonify({'error': 'Worker not found'}), 404
 
