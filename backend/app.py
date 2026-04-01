@@ -6,6 +6,11 @@ import sqlite3
 import json
 from datetime import datetime, timedelta
 import os
+try:
+    import psycopg2
+    import psycopg2.extras
+except ImportError:
+    pass
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'your-secret-key-change-in-production'
@@ -15,14 +20,78 @@ CORS(app)
 jwt = JWTManager(app)
 
 DATABASE = 'hirafi.db'
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db():
+    if DATABASE_URL:
+        db = psycopg2.connect(DATABASE_URL)
+        db.autocommit = False
+        return db
     db = sqlite3.connect(DATABASE)
     db.row_factory = sqlite3.Row
     return db
 
 def init_db():
     db = get_db()
+    if DATABASE_URL:
+        cursor = db.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                name TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                user_type TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS workers (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                category TEXT NOT NULL,
+                bio TEXT,
+                location TEXT NOT NULL,
+                experience_years INTEGER NOT NULL,
+                whatsapp_number TEXT NOT NULL,
+                vtc_license_number TEXT NOT NULL,
+                verification_status TEXT DEFAULT 'pending',
+                avg_rating REAL DEFAULT 0,
+                review_count INTEGER DEFAULT 0,
+                is_available INTEGER DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS reviews (
+                id SERIAL PRIMARY KEY,
+                worker_id INTEGER NOT NULL,
+                customer_id INTEGER NOT NULL,
+                rating INTEGER NOT NULL,
+                comment TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (worker_id) REFERENCES workers(id),
+                FOREIGN KEY (customer_id) REFERENCES users(id)
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS bookings (
+                id SERIAL PRIMARY KEY,
+                worker_id INTEGER NOT NULL,
+                customer_id INTEGER NOT NULL,
+                service_description TEXT NOT NULL,
+                payment_method TEXT NOT NULL DEFAULT 'cash',
+                status TEXT DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (worker_id) REFERENCES workers(id),
+                FOREIGN KEY (customer_id) REFERENCES users(id)
+            )
+        ''')
+        db.commit()
+        db.close()
+        return
     cursor = db.cursor()
 
     cursor.execute('''
