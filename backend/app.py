@@ -75,6 +75,7 @@ def init_db():
             worker_id INTEGER NOT NULL,
             customer_id INTEGER NOT NULL,
             service_description TEXT NOT NULL,
+            payment_method TEXT NOT NULL DEFAULT 'cash',
             status TEXT DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (worker_id) REFERENCES workers(id),
@@ -418,7 +419,7 @@ def create_booking():
         user_id = get_jwt_identity()
         data = request.get_json()
 
-        if not data or not all(k in data for k in ['worker_id', 'service_description']):
+        if not data or not all(k in data for k in ['worker_id', 'service_description', 'payment_method']):
             return jsonify({'error': 'Missing required fields'}), 400
 
         db = get_db()
@@ -433,8 +434,8 @@ def create_booking():
             return jsonify({'error': 'Worker not found'}), 404
 
         cursor.execute(
-            'INSERT INTO bookings (worker_id, customer_id, service_description) VALUES (?, ?, ?)',
-            (data['worker_id'], user_id, data['service_description'])
+            'INSERT INTO bookings (worker_id, customer_id, service_description, payment_method) VALUES (?, ?, ?, ?)',
+            (data['worker_id'], user_id, data['service_description'], data['payment_method'])
         )
         db.commit()
         booking_id = cursor.lastrowid
@@ -476,6 +477,7 @@ def get_bookings():
                 'category': b['category'],
                 'location': b['location'],
                 'service_description': b['service_description'],
+                'payment_method': b['payment_method'],
                 'status': b['status'],
                 'created_at': b['created_at']
             } for b in bookings
