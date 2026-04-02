@@ -21,6 +21,8 @@ export default function RegisterWorker({ setUser }) {
     vtc_license_number: ''
   });
   const [error, setError] = useState('');
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const categories = [
@@ -37,6 +39,14 @@ export default function RegisterWorker({ setUser }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPhoto(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -82,6 +92,15 @@ export default function RegisterWorker({ setUser }) {
         const data = await res.json();
         localStorage.setItem('token', data.token);
         setUser(data.user);
+        if (photo) {
+          const formData = new FormData();
+          formData.append('photo', photo);
+          await apiFetch('/api/workers/upload-photo', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${data.token}` },
+            body: formData
+          });
+        }
         navigate('/');
       } else if (res.status === 409) {
         setError(t('messages.emailExists'));
@@ -237,6 +256,19 @@ export default function RegisterWorker({ setUser }) {
                 value={formData.vtc_license_number}
                 onChange={handleChange}
                 placeholder="رقم الترخيص"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>صورة شخصية (اختياري)</label>
+              {photoPreview && (
+                <img src={photoPreview} alt="preview" style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', marginBottom: '0.5rem', display: 'block' }} />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                style={{ padding: '0.5rem 0' }}
               />
             </div>
 

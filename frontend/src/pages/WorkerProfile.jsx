@@ -136,9 +136,13 @@ export default function WorkerProfile({ user }) {
       <div className="worker-header-section">
         <div className="container">
           <div className="worker-header-content">
-            <div className="worker-avatar-large" style={{ backgroundColor: 'var(--green-primary)' }}>
-              {worker.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-            </div>
+            {worker.photo_url ? (
+              <img src={worker.photo_url} alt={worker.name} style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover' }} />
+            ) : (
+              <div className="worker-avatar-large" style={{ backgroundColor: 'var(--green-primary)' }}>
+                {worker.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+              </div>
+            )}
             <div className="worker-header-info">
               <div className="header-name-row">
                 <div>
