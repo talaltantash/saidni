@@ -12,6 +12,15 @@ try:
 except ImportError:
     pass
 
+import cloudinary
+import cloudinary.uploader
+
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET')
+)
+
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 'your-secret-key-change-in-production'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
@@ -65,6 +74,7 @@ def init_db():
                 avg_rating REAL DEFAULT 0,
                 review_count INTEGER DEFAULT 0,
                 is_available INTEGER DEFAULT 1,
+                photo_url TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
@@ -672,6 +682,36 @@ def verify_worker(worker_id):
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({'status': 'ok'}), 200
+
+
+@app.route('/api/workers/upload-photo', methods=['POST'])
+@jwt_required()
+def upload_photo():
+    try:
+        user_id = get_jwt_identity()
+        db = get_db()
+        cursor = db.cursor()
+
+        cursor.execute(sql('SELECT * FROM workers WHERE user_id = %s'), (user_id,))
+        worker = cursor.fetchone()
+
+        if not worker:
+            return jsonify({'error': 'Worker not found'}), 404
+
+        if 'photo' not in request.files:
+            return jsonify({'error': 'No photo provided'}), 400
+
+        photo = request.files['photo']
+        result = cloudinary.uploader.upload(photo, folder='hirafi/workers')
+        photo_url = result['secure_url']
+
+        cursor.execute(sql('UPDATE workers SET photo_url = %s WHERE user_id = %s'), (photo_url, user_id))
+        db.commit()
+        db.close()
+
+        return jsonify({'photo_url': photo_url}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     init_db()
