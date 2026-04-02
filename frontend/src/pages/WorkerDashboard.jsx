@@ -30,6 +30,22 @@ export default function WorkerDashboard({ user, setUser }) {
     setLoading(false);
   };
 
+  const updateBookingStatus = async (bookingId, status) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await apiFetch(`/api/bookings/${bookingId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        fetchBookings();
+      }
+    } catch (err) {
+      console.error('Error updating booking:', err);
+    }
+  };
+
   const toggleAvailability = async () => {
     setUpdating(true);
     try {
@@ -138,6 +154,36 @@ export default function WorkerDashboard({ user, setUser }) {
                     <small style={{ color: 'var(--text-secondary)' }}>
                       {new Date(booking.created_at).toLocaleDateString('ar-JO')}
                     </small>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                      💳 {booking.payment_method === 'cash' ? 'كاش' : booking.payment_method === 'cliq' ? 'CliQ' : 'فيزا/ماستركارد'}
+                    </p>
+                    {booking.status === 'pending' && (
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                        <button
+                          onClick={() => updateBookingStatus(booking.id, 'accepted')}
+                          className="btn btn-primary btn-small"
+                        >
+                          ✓ قبول
+                        </button>
+                        <button
+                          onClick={() => updateBookingStatus(booking.id, 'declined')}
+                          className="btn btn-secondary btn-small"
+                          style={{ color: 'red' }}
+                        >
+                          ✗ رفض
+                        </button>
+                      </div>
+                    )}
+                    {booking.status === 'accepted' && (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <button
+                          onClick={() => updateBookingStatus(booking.id, 'completed')}
+                          className="btn btn-success btn-small"
+                        >
+                          ✓ تم الإنجاز
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

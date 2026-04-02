@@ -713,6 +713,41 @@ def upload_photo():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/api/bookings/<int:booking_id>/status', methods=['PUT'])
+@jwt_required()
+def update_booking_status(booking_id):
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        new_status = data.get('status')
+
+        if new_status not in ['accepted', 'declined', 'completed']:
+            return jsonify({'error': 'Invalid status'}), 400
+
+        db = get_db()
+        cursor = db.cursor()
+
+        cursor.execute(sql('SELECT user_type FROM users WHERE id = %s'), (user_id,))
+        user = cursor.fetchone()
+
+        cursor.execute(sql('SELECT b.*, w.user_id as worker_user_id FROM bookings b JOIN workers w ON b.worker_id = w.id WHERE b.id = %s'), (booking_id,))
+        booking = cursor.fetchone()
+
+        if not booking:
+            return jsonify({'error': 'Booking not found'}), 404
+
+        if str(booking['worker_user_id']) != str(user_id) and user['user_type'] != 'admin':
+            return jsonify({'error': 'Unauthorized'}), 403
+
+        cursor.execute(sql('UPDATE bookings SET status = %s WHERE id = %s'), (new_status, booking_id))
+        db.commit()
+        db.close()
+
+        return jsonify({'message': 'Booking status updated'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))
