@@ -111,6 +111,10 @@ export default function WorkerProfile({ user }) {
       });
       if (res.ok) {
         setBookingSuccess('تم إرسال طلب الحجز بنجاح!');
+        const paymentLabels = { cash: 'كاش', cliq: 'CliQ', visa_mastercard: 'فيزا/ماستركارد' };
+        const msg = `مرحبا، أنا ${user.name}. أود حجز خدمة منك عبر منصة سايدني.%0aالخدمة: ${bookingData.service_description}%0aطريقة الدفع: ${paymentLabels[bookingData.payment_method]}`;
+        const waUrl = `https://wa.me/${worker.whatsapp_number.replace(/\D/g, '')}?text=${msg}`;
+        window.open(waUrl, '_blank');
         setBookingData({ service_description: '', payment_method: 'cash' });
       } else {
         setBookingError('حدث خطأ، حاول مرة أخرى');
