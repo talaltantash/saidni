@@ -408,20 +408,20 @@ def get_worker(worker_id):
         db = get_db()
         cursor = db.cursor()
 
-        worker = cursor.execute(
+        cursor.execute(
             'SELECT w.*, u.name, u.email, u.phone FROM workers w JOIN users u ON w.user_id = u.id WHERE w.id = %s',
             (worker_id,)
-        ))
-        cursor.fetchone()
+        )
+        worker = cursor.fetchone()
 
         if not worker:
             return jsonify({'error': 'Worker not found'}), 404
 
-        reviews = cursor.execute(
+        cursor.execute(
             'SELECT r.*, u.name FROM reviews r JOIN users u ON r.customer_id = u.id WHERE r.worker_id = %s ORDER BY r.created_at DESC',
             (worker_id,)
-        ))
-        cursor.fetchall()
+        )
+        reviews = cursor.fetchall()
 
         db.close()
 
@@ -488,11 +488,11 @@ def create_review():
         )
         db.commit()
 
-        all_reviews = cursor.execute(
+        cursor.execute(
             'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM reviews WHERE worker_id = %s',
             (data['worker_id'],)
-        ))
-        cursor.fetchone()
+        )
+        all_reviews = cursor.fetchone()
 
         new_avg = all_reviews['avg_rating']
         new_count = all_reviews['count']
@@ -569,8 +569,8 @@ def get_bookings():
                WHERE b.customer_id = %s OR b.worker_id IN (SELECT id FROM workers WHERE user_id = %s)
                ORDER BY b.created_at DESC''',
             (user_id, user_id)
-        ))
-        cursor.fetchall()
+        )
+        bookings = cursor.fetchall()
 
         db.close()
 
@@ -608,8 +608,8 @@ def get_pending_workers():
         workers = cursor.execute(
             'SELECT w.*, u.name, u.email FROM workers w JOIN users u ON w.user_id = u.id WHERE w.verification_status = %s ORDER BY w.created_at ASC',
             ('pending',)
-        ))
-        cursor.fetchall()
+        )
+        workers = cursor.fetchall()
 
         db.close()
 
