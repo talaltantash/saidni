@@ -477,12 +477,11 @@ def create_review():
 
         cursor.execute(sql('SELECT * FROM workers WHERE id = %s'), (data['worker_id'],))
         worker = cursor.fetchone()
-        cursor.fetchone()
         if not worker:
             return jsonify({'error': 'Worker not found'}), 404
 
         cursor.execute(
-            'INSERT INTO reviews (worker_id, customer_id, rating, comment) VALUES (%s, %s, %s, %s)',
+            'INSERT INTO reviews (worker_id, customer_id, rating, comment) VALUES (%s, %s, %s, %s) RETURNING id',
             (data['worker_id'], user_id, rating, data['comment'])
         )
         db.commit()
@@ -502,7 +501,7 @@ def create_review():
         )
         db.commit()
 
-        review_id = cursor.lastrowid
+        review_id = cursor.fetchone()['id'] if DATABASE_URL else cursor.lastrowid
         db.close()
 
         return jsonify({
@@ -533,16 +532,18 @@ def create_booking():
 
         cursor.execute(sql('SELECT * FROM workers WHERE id = %s'), (data['worker_id'],))
         worker = cursor.fetchone()
-        cursor.fetchone()
         if not worker:
             return jsonify({'error': 'Worker not found'}), 404
 
         cursor.execute(
-            'INSERT INTO bookings (worker_id, customer_id, service_description, payment_method) VALUES (%s, %s, %s, %s)',
+            'INSERT INTO bookings (worker_id, customer_id, service_description, payment_method) VALUES (%s, %s, %s, %s) RETURNING id',
             (data['worker_id'], user_id, data['service_description'], data['payment_method'])
         )
+        if DATABASE_URL:
+            booking_id = cursor.fetchone()['id']
+        else:
+            booking_id = cursor.lastrowid
         db.commit()
-        booking_id = cursor.lastrowid
         db.close()
 
         return jsonify({
@@ -652,7 +653,6 @@ def verify_worker(worker_id):
 
         cursor.execute(sql('SELECT * FROM workers WHERE id = %s'), (worker_id,))
         worker = cursor.fetchone()
-        cursor.fetchone()
         if not worker:
             return jsonify({'error': 'Worker not found'}), 404
 
