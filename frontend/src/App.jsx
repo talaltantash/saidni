@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import RegisterCustomer from './pages/RegisterCustomer';
 import RegisterWorker from './pages/RegisterWorker';
 import WorkerDashboard from './pages/WorkerDashboard';
+import CustomerDashboard from './pages/CustomerDashboard';
 import AdminPanel from './pages/AdminPanel';
 
 function App() {
@@ -64,6 +65,7 @@ function App() {
           <Route path="/register/customer" element={<RegisterCustomer setUser={setUser} />} />
           <Route path="/register/worker" element={<RegisterWorker setUser={setUser} />} />
           <Route path="/dashboard" element={<ProtectedRoute user={user} requiredType="worker"><WorkerDashboard user={user} setUser={setUser} /></ProtectedRoute>} />
+          <Route path="/my-bookings" element={<ProtectedRoute user={user} requiredType="customer"><CustomerDashboard user={user} /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute user={user} requiredType="admin"><AdminPanel /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

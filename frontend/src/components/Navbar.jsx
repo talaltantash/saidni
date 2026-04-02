@@ -37,7 +37,7 @@ export default function Navbar({ user, setUser }) {
             </Link>
 
             {user && user.user_type === 'customer' && (
-              <Link to="/browse" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>
+              <Link to="/my-bookings" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>
                 {t('nav.myBookings')}
               </Link>
             )}
